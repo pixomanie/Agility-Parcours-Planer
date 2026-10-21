@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="de"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Agility Parcours-Planer</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800&display=swap">
+<style>
+:root{--bg:#f5f6f0;--sf:#fff;--tx:#1c2a23;--mu:#5a6a61;--ac:#1d7a4b;--ac2:#e3f1e8;--ln:#d6dbd0;--fld:#edf2e1;--gr:#d9e2c8;--err:#b3261e;--wr:#8f5f00;--nu:#1d7a4b;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#131a16;--sf:#1c2520;--tx:#e8efe9;--mu:#9baba2;--ac:#4cc58a;--ac2:#1f3a2c;--ln:#33423a;--fld:#22301f;--gr:#31422b;--err:#ff8a80;--wr:#f2c25b;--nu:#4cc58a}}
+:root[data-theme=dark]{--bg:#131a16;--sf:#1c2520;--tx:#e8efe9;--mu:#9baba2;--ac:#4cc58a;--ac2:#1f3a2c;--ln:#33423a;--fld:#22301f;--gr:#31422b;--err:#ff8a80;--wr:#f2c25b;--nu:#4cc58a}
+html,body{height:100%;margin:0}
+body{font-family:Nunito,system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--tx);font-size:16px}
+#app{height:100%;display:flex;flex-direction:column}
+button,input,select{font:inherit;color:inherit}
+button{background:var(--sf);border:1.5px solid var(--ln);border-radius:12px;padding:10px 14px;min-height:44px;cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--ac);outline-offset:2px}
+button.pri{background:var(--ac);border-color:var(--ac);color:#fff;font-weight:800}
+input,select{background:var(--sf);border:1.5px solid var(--ln);border-radius:10px;padding:9px 10px;min-height:44px;box-sizing:border-box;max-width:100%}
+.mu{color:var(--mu)}
+main{padding:24px 18px;max-width:720px;margin:0 auto;width:100%;box-sizing:border-box;overflow:auto}
+h1{font-size:30px;font-weight:800;margin:8px 0 4px;letter-spacing:-.5px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:22px}
+.big{display:flex;flex-direction:column;gap:6px;text-align:left;padding:20px 16px;min-height:120px;border-radius:18px;font-size:19px}
+.big span{font-size:14px;color:var(--mu)}
+.big:first-child{background:var(--ac);border-color:var(--ac);color:#fff}.big:first-child span{color:#dff3e7}
+.big[disabled]{opacity:.5;cursor:default}
+.card{background:var(--sf);border:1.5px solid var(--ln);border-radius:14px;padding:14px;margin:10px 0}
+.card b{font-size:18px}.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+label{display:block;margin:12px 0 4px;font-weight:700}
+.f2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.f2 input,.f2 select{width:100%}
+.bar{display:flex;gap:6px;padding:8px;align-items:center;background:var(--sf);border-bottom:1.5px solid var(--ln)}
+.bar input{flex:1;min-width:0;font-weight:800}
+#cv{flex:1;overflow:auto;background:var(--gr);min-height:0}
+#sv{display:block;touch-action:pan-x pan-y}
+.ob{cursor:grab;touch-action:none}
+#pn{max-height:38%;overflow:auto;background:var(--sf);border-top:1.5px solid var(--ln);padding:10px 12px}
+.pal{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px}
+.pal button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px;font-size:14px}
+.tabs{display:flex;background:var(--sf);border-top:1.5px solid var(--ln)}
+.tabs button{flex:1;border:0;border-radius:0;font-weight:700;font-size:14px;background:none;min-height:52px}
+.tabs button.on{background:var(--ac2);color:var(--ac)}
+.chip{display:inline-block;background:var(--ac2);color:var(--ac);border-radius:999px;padding:4px 10px;margin:2px;font-weight:800}
+.msg{padding:8px 10px;border-radius:10px;margin:6px 0;border-left:5px solid var(--ln);background:var(--bg)}
+.msg.e{border-color:var(--err)}.msg.w{border-color:var(--wr)}.msg.h{border-color:var(--ac)}
+.pr{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.pr input{width:100%}
+.ptitle{display:none}button.chip{min-height:36px;border:0;padding:4px 10px}
+@media print{.bar,.tabs,#pn{display:none!important}#app,#cv{display:block;overflow:visible;height:auto}#sv{margin:0 auto}:root:not([data-theme=light]){--fld:#edf2e1}.ptitle{display:block;padding:0 0 8px}body{background:#fff;color:#000}}
+</style><style id="pg"></style></head>
+<body><div id="app"></div>
+<script>
+/* Hindernisse: Name, Breite (quer) m, Länge (in Laufrichtung) m, Farbe, Kategorie. Maße sind Richtwerte, NICHT aus der Prüfungsordnung geprüft. */
+const T={
+hurdle:['Hürde',1.3,.3,'#d9534f','j'],double:['Doppelsprung',1.3,.9,'#d9534f','j'],wall:['Mauer',1.3,.3,'#b5651d','j'],
+tire:['Reifen',1.0,.3,'#2f7fd1','j'],broad:['Weitsprung',1.3,1.2,'#d9534f','j'],
+aframe:['A-Wand',.95,3.0,'#e0a526','k'],dogwalk:['Laufsteg',.3,12,'#e0a526','k'],seesaw:['Wippe',.3,3.6,'#e0a526','k'],
+slalom:['Slalom 12',.5,6.6,'#7a52c7','x'],tunnel:['Tunnel',.6,3,'#3b3b3b','x'],start:['Start',3,.15,'#1d7a4b','m'],finish:['Ziel',3,.15,'#222','m']};
+let courses=[],cur=null,sel=null,mode='add',zoom=1,snapOn=true,undo=[],redo=[],drag=null;
+const app=document.getElementById('app');
+const uid=()=>Math.random().toString(36).slice(2,9);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const r1=n=>Math.round(n*10)/10;
+let stOk=true;function load(){try{localStorage.setItem('acd-t','1');courses=JSON.parse(localStorage.getItem('acd-courses')||'[]')}catch(e){stOk=false;courses=[]}}
+function persist(){if(!cur)return;cur.updated=Date.now();try{localStorage.setItem('acd-courses',JSON.stringify(courses))}catch(e){stOk=false}}
+function fmt(t){return new Date(t).toLocaleDateString('de-DE')}
+function vec(o,dir){const a=o.r*Math.PI/180,s=dir&1?-1:1;return[Math.sin(a)*s,-Math.cos(a)*s]}
+function half(o){return Math.max(T[o.t][2]/2,.3)}
+const nz=v=>{const n=Math.hypot(v[0],v[1])||1;return[v[0]/n,v[1]/n]};
+function route(c){const L=[];c.passages.forEach(p=>{const o=c.obs.find(x=>x.id===p.oid);if(!o)return;const v=vec(o,p.dir),h=half(o),m=T[o.t][4]==='j'?(p.mode||0):0,lf=[v[1],-v[0]];
+const q={o,v,m,h,a:[o.x-v[0]*h,o.y-v[1]*h],b:[o.x+v[0]*h,o.y+v[1]*h]};q.ve=m===1?nz([v[0]+lf[0]*.9,v[1]+lf[1]*.9]):m===2?nz([v[0]-lf[0]*.9,v[1]-lf[1]*.9]):v;L.push(q)});
+let d='',len=0,cp=null,cv=null,ar=[];
+const bez=(p1,t1,kk)=>{const k=kk||Math.hypot(p1[0]-cp[0],p1[1]-cp[1])*.4,c1=[cp[0]+cv[0]*k,cp[1]+cv[1]*k],c2=[p1[0]-t1[0]*k,p1[1]-t1[1]*k];d+=`C${c1} ${c2} ${p1} `;let px=cp[0],py=cp[1];for(let t=1;t<=24;t++){const u=t/24,w=1-u,x=w*w*w*cp[0]+3*w*w*u*c1[0]+3*w*u*u*c2[0]+u*u*u*p1[0],y=w*w*w*cp[1]+3*w*w*u*c1[1]+3*w*u*u*c2[1]+u*u*u*p1[1];len+=Math.hypot(x-px,y-py);px=x;py=y}{const mx=(cp[0]+3*c1[0]+3*c2[0]+p1[0])/8,my=(cp[1]+3*c1[1]+3*c2[1]+p1[1])/8,tx=.25*(c1[0]-cp[0])+.5*(c2[0]-c1[0])+.25*(p1[0]-c2[0]),ty=.25*(c1[1]-cp[1])+.5*(c2[1]-c1[1])+.25*(p1[1]-c2[1]);ar.push([mx,my,Math.atan2(ty,tx)*180/Math.PI+90])}cp=p1;cv=t1};
+const ln=p1=>{d+=`L${p1} `;len+=Math.hypot(p1[0]-cp[0],p1[1]-cp[1]);cp=p1};
+L.forEach((q,i)=>{const o=q.o,v=q.v;if(q.m>=3){const t=[-v[0],-v[1]],sd=q.m===3?1:-1,lat=[-v[1]*sd,v[0]*sd],off=T[o.t][1]/2+.6,W1=[o.x+lat[0]*off,o.y+lat[1]*off],A2=[o.x-v[0]*(q.h+1.2),o.y-v[1]*(q.h+1.2)];
+if(!i){d+=`M${W1} `;cp=W1;cv=t}else bez(W1,t);bez(A2,v);ln(q.a);ln(q.b);cv=v}
+else{if(!i){d+=`M${q.a} `;cp=q.a}else bez(q.a,q.v);ln(q.b);cv=q.ve}});
+return{d,len,L,ar}}
+function routeOld(c){const L=[];c.passages.forEach(p=>{const o=c.obs.find(x=>x.id===p.oid);if(!o)return;const v=vec(o,p.dir),h=half(o,p.dir);L.push({o,v,a:[o.x-v[0]*h,o.y-v[1]*h],b:[o.x+v[0]*h,o.y+v[1]*h]})});
+let d='',len=0;for(let i=0;i<L.length;i++){const q=L[i];if(!i)d+=`M${q.a} L${q.b}`;else{const p=L[i-1],k=Math.hypot(q.a[0]-p.b[0],q.a[1]-p.b[1])*.4,c1=[p.b[0]+p.v[0]*k,p.b[1]+p.v[1]*k],c2=[q.a[0]-q.v[0]*k,q.a[1]-q.v[1]*k];d+=`C${c1} ${c2} ${q.a} L${q.b}`;let px=p.b[0],py=p.b[1];for(let t=1;t<=24;t++){const u=t/24,w=1-u,x=w*w*w*p.b[0]+3*w*w*u*c1[0]+3*w*u*u*c2[0]+u*u*u*q.a[0],y=w*w*w*p.b[1]+3*w*w*u*c1[1]+3*w*u*u*c2[1]+u*u*u*q.a[1];len+=Math.hypot(x-px,y-py);px=x;py=y}}len+=Math.hypot(q.b[0]-q.a[0],q.b[1]-q.a[1])}
+return{d,len,L}}
+function length(c){return route(c).len}
+
+/* ---------- Startseite ---------- */
+function home(){cur=null;sel=null;app.innerHTML=`<main><h1>Agility Parcours-Planer</h1><p class="mu">Plane deinen Parcours in wenigen Schritten. Alles wird in diesem Browser gespeichert.</p>
+<div class="grid"><button class="big" onclick="newForm()"><b>Neuer Parcours</b><span>Leere Fläche anlegen</span></button>
+<button class="big" onclick="lib()"><b>Meine Parcours</b><span>${courses.length} gespeichert</span></button>
+<button class="big" disabled><b>Live-Begehung</b><span>Kommt in Phase 3</span></button>
+<button class="big" onclick="tpl()"><b>Vorlagen</b><span>Beispiel-Parcours öffnen</span></button></div><div class="row"><button onclick="backup()">Sicherung / Laden</button></div>${stOk?'':'<div class="msg w"><b>Achtung:</b> Dein Browser erlaubt hier kein Speichern. Nutze „Sicherung / Laden“, um deine Parcours als Text zu sichern.</div>'}</main>`}
+function newForm(){app.innerHTML=`<main><button onclick="home()">‹ Zurück</button><h1>Neuer Parcours</h1>
+<label for="n">Name</label><input id="n" value="Mein Parcours" style="width:100%">
+<label for="t">Parcoursart</label><select id="t" style="width:100%"><option>Agility</option><option>Jumping</option><option>Spiel / Open</option><option>Freies Training</option></select>
+<div class="f2"><div><label for="l">Stufe</label><select id="l"><option>A0 / JP0</option><option>A1 / JP1</option><option>A2 / JP2</option><option>A3 / JP3</option></select></div>
+<div><label for="s">Größenklasse</label><select id="s"><option>Small (S)</option><option>Medium (M)</option><option>Intermediate (I)</option><option>Large (L)</option></select></div>
+<div><label for="w">Breite (m)</label><input id="w" type="number" value="20" min="5" max="100"></div>
+<div><label for="h">Länge (m)</label><input id="h" type="number" value="40" min="5" max="100"></div></div>
+<div class="row"><button class="pri" onclick="create()">Parcours anlegen</button></div></main>`}
+function create(){const g=i=>document.getElementById(i).value;
+const c={id:uid(),name:g('n')||'Parcours',type:g('t'),level:g('l'),size:g('s'),w:Math.max(5,+g('w')||20),h:Math.max(5,+g('h')||40),obs:[],passages:[],created:Date.now(),updated:Date.now()};
+courses.unshift(c);cur=c;persist();open_(c.id)}
+function tpl(){const c={id:uid(),name:'Beispiel: Trainingsparcours',type:'Freies Training',level:'A1 / JP1',size:'Large (L)',w:20,h:40,obs:[],passages:[],created:Date.now(),updated:Date.now()};
+const L=[['start',10,4,0],['hurdle',10,9,0],['hurdle',6,14,0],['tunnel',10,20,0],['double',14,26,0],['wall',10,31,0],['aframe',10,36,0],['finish',10,39,0]];
+L.forEach(a=>{const o={id:uid(),t:a[0],x:a[1],y:a[2],r:a[3]};c.obs.push(o);c.passages.push({id:uid(),oid:o.id,dir:1})});
+courses.unshift(c);persist();open_(c.id)}
+
+/* ---------- Bibliothek ---------- */
+let delArm=null;
+function lib(){const q=courses.length?courses.map(c=>`<div class="card"><b>${esc(c.name)}</b><div class="mu">${esc(c.type)} · ${esc(c.level)} · ${esc(c.size)} · ${c.w}×${c.h} m</div>
+<div class="mu">${c.passages.length} Passagen · ca. ${r1(length(c))} m · geändert ${fmt(c.updated)}</div>
+<div class="row"><button class="pri" onclick="open_('${c.id}')">Öffnen</button><button onclick="dup('${c.id}')">Kopieren</button><button onclick="del('${c.id}')">${delArm===c.id?'Wirklich löschen?':'Löschen'}</button></div></div>`).join(''):'<p class="mu">Noch kein Parcours vorhanden. Lege deinen ersten Parcours an.</p>';
+app.innerHTML=`<main><button onclick="home()">‹ Zurück</button><h1>Meine Parcours</h1>${q}</main>`}
+function dup(id){const c=courses.find(x=>x.id===id);const n=JSON.parse(JSON.stringify(c));n.id=uid();n.name=c.name+' (Kopie)';n.created=n.updated=Date.now();courses.unshift(n);cur=n;persist();cur=null;lib()}
+function del(id){if(delArm!==id){delArm=id;return lib()}courses=courses.filter(c=>c.id!==id);delArm=null;cur={};try{localStorage.setItem('acd-courses',JSON.stringify(courses))}catch(e){}cur=null;lib()}
+
+/* ---------- Editor ---------- */
+function open_(id){cur=courses.find(c=>c.id===id);sel=null;mode='add';zoom=1;undo=[];redo=[];ed()}
+function ed(){app.innerHTML=`<header class="bar"><button onclick="persist();lib()">‹ Zurück</button><input id="nm" aria-label="Name" value="${esc(cur.name)}" oninput="cur.name=this.value;persist()"><button aria-label="Rückgängig" onclick="doUndo()">↶</button><button aria-label="Wiederholen" onclick="doRedo()">↷</button></header>
+<div id="cv"><div class="ptitle"><b>${esc(cur.name)}</b> · ${esc(cur.type)} · ${esc(cur.level)} · ${esc(cur.size)} · ${cur.w}×${cur.h} m · Länge ca. ${r1(length(cur))} m (Planungshilfe, keine offizielle Messung)</div><svg id="sv"></svg></div><section id="pn"></section>
+<nav class="tabs"><button data-m="add" onclick="setMode('add')">Hinzufügen</button><button data-m="num" onclick="setMode('num')">Nummerieren</button><button data-m="chk" onclick="setMode('chk')">Prüfen</button><button onclick="zm(1.25)">＋</button><button onclick="zm(.8)">－</button><button id="gr" onclick="snapOn=!snapOn;tabs()">Raster</button><button onclick="printPdf()">PDF</button></nav>`;
+const sv=document.getElementById('sv');sv.addEventListener('pointerdown',pd);sv.addEventListener('pointermove',pm);sv.addEventListener('pointerup',pu);sv.addEventListener('pointercancel',pu);
+draw();panel();tabs()}
+function tabs(){document.querySelectorAll('.tabs [data-m]').forEach(b=>b.classList.toggle('on',b.dataset.m===mode));const g=document.getElementById('gr');if(g)g.classList.toggle('on',snapOn)}
+function setMode(m){mode=m;if(m!=='add')sel=sel;panel();draw();tabs()}
+function zm(f){zoom=Math.min(4,Math.max(.5,zoom*f));draw()}
+function snapshot(){undo.push(JSON.stringify([cur.obs,cur.passages]));if(undo.length>60)undo.shift();redo=[]}
+function restore(s){[cur.obs,cur.passages]=JSON.parse(s);if(!cur.obs.find(o=>o.id===sel))sel=null;persist();draw();panel()}
+function doUndo(){if(!undo.length)return;redo.push(JSON.stringify([cur.obs,cur.passages]));restore(undo.pop())}
+function doRedo(){if(!redo.length)return;undo.push(JSON.stringify([cur.obs,cur.passages]));restore(redo.pop())}
+
+function shape(o){const d=T[o.t],w=d[1],l=d[2],c=d[3];let s='';
+if(o.t==='slalom'){for(let i=0;i<12;i++)s+=`<circle cx="0" cy="${-l/2+.3+i*.6}" r=".09" fill="${c}"/>`;s+=`<rect x="${-w/2}" y="${-l/2}" width="${w}" height="${l}" fill="none" stroke="${c}" stroke-width=".05" stroke-dasharray=".2 .2"/>`}
+else if(o.t==='tunnel')s=`<rect x="${-w/2}" y="${-l/2}" width="${w}" height="${l}" rx=".3" fill="${c}"/><rect x="${-w/2+.1}" y="${-l/2+.1}" width="${w-.2}" height="${l-.2}" rx=".2" fill="#777"/>`;
+else if(d[4]==='k')s=`<rect x="${-w/2}" y="${-l/2}" width="${w}" height="${l}" fill="${c}"/><rect x="${-w/2}" y="${-l/2}" width="${w}" height=".6" fill="#2f7fd1" opacity=".8"/><rect x="${-w/2}" y="${l/2-.6}" width="${w}" height=".6" fill="#2f7fd1" opacity=".8"/>`;
+else if(o.t==='tire')s=`<circle r=".45" fill="none" stroke="${c}" stroke-width=".14"/><rect x="${-w/2-.1}" y="-.06" width=".1" height=".12" fill="#333"/><rect x="${w/2}" y="-.06" width=".1" height=".12" fill="#333"/>`;
+else if(d[4]==='m')s=`<rect x="${-w/2}" y="${-l/2}" width="${w}" height="${l}" fill="${c}"/>`;
+else s=`<rect x="${-w/2}" y="${-l/2}" width="${w}" height="${l}" fill="${c}" opacity=".85"/><rect x="${-w/2-.08}" y="${-l/2-.04}" width=".16" height="${l+.08}" fill="#fff" stroke="#555" stroke-width=".03"/><rect x="${w/2-.08}" y="${-l/2-.04}" width=".16" height="${l+.08}" fill="#fff" stroke="#555" stroke-width=".03"/>`;
+return s}
+function draw(){const sv=document.getElementById('sv');if(!sv)return;const cv=document.getElementById('cv'),W=cur.w,H=cur.h;
+const ppm=Math.max(6,(cv.clientWidth||360)/(W+2))*zoom;sv.style.width=(W+2)*ppm+'px';sv.style.height=(H+2)*ppm+'px';sv.setAttribute('viewBox',`-1 -1 ${W+2} ${H+2}`);
+let g=`<rect x="0" y="0" width="${W}" height="${H}" fill="var(--fld)" stroke="#6b7d5e" stroke-width=".12"/>`;
+if(snapOn)for(let i=1;i<W;i++)g+=`<line x1="${i}" y1="0" x2="${i}" y2="${H}" stroke="#8a9a7c" stroke-width="${i%5?.015:.04}" opacity=".5"/>`;
+if(snapOn)for(let j=1;j<H;j++)g+=`<line x1="0" y1="${j}" x2="${W}" y2="${j}" stroke="#8a9a7c" stroke-width="${j%5?.015:.04}" opacity=".5"/>`;
+const P=cur.passages.map(p=>cur.obs.find(o=>o.id===p.oid)).filter(Boolean);
+const R=route(cur);if(R.L.length>1)g+=`<path d="${R.d}" fill="none" stroke="#1d7a4b" stroke-width=".12" stroke-linecap="round" opacity=".9"/>`;
+cur.obs.forEach(o=>{g+=`<g class="ob" data-id="${o.id}" transform="translate(${o.x} ${o.y}) rotate(${o.r})">${shape(o)}${o.id===sel?`<rect x="${-T[o.t][1]/2-.3}" y="${-T[o.t][2]/2-.3}" width="${T[o.t][1]+.6}" height="${T[o.t][2]+.6}" fill="none" stroke="#2f7fd1" stroke-width=".1" stroke-dasharray=".3 .2"/>`:''}<rect x="${-Math.max(T[o.t][1],1)/2-.2}" y="${-T[o.t][2]/2-.2}" width="${Math.max(T[o.t][1],1)+.4}" height="${T[o.t][2]+.4}" fill="transparent"/></g>`});
+const cnt={};cur.passages.forEach((p,i)=>{const o=cur.obs.find(x=>x.id===p.oid);if(!o)return;const k=cnt[o.id]=(cnt[o.id]||0);cnt[o.id]++;
+const cx=o.x+(T[o.t][1]/2+.9)+k*1.1,cy=o.y;g+=`<g pointer-events="none"><circle cx="${cx}" cy="${cy}" r=".55" fill="#fff" stroke="#1d7a4b" stroke-width=".1"/><text x="${cx}" y="${cy+.22}" text-anchor="middle" font-size=".62" font-weight="800" fill="#145a37" font-family="Nunito,sans-serif">${i+1}</text></g>`});
+R.ar.forEach(a=>{g+=`<path d="M0 -.3L.22 .2L-.22 .2Z" fill="#1d7a4b" stroke="#fff" stroke-width=".05" transform="translate(${a[0]} ${a[1]}) rotate(${a[2]})" pointer-events="none"/>`});
+sv.innerHTML=g}
+
+function pt(e){const sv=document.getElementById('sv'),p=sv.createSVGPoint();p.x=e.clientX;p.y=e.clientY;const m=p.matrixTransform(sv.getScreenCTM().inverse());return{x:m.x,y:m.y}}
+const sn=v=>snapOn?Math.round(v*2)/2:r1(v);
+function pd(e){const g=e.target.closest('.ob');if(!g){if(mode!=='num'){sel=null;panel();draw()}return}
+const o=cur.obs.find(x=>x.id===g.dataset.id);if(!o)return;
+if(mode==='num'){snapshot();const R=route(cur),l=R.L[R.L.length-1];let dir=0;if(l){const e=dr=>{const v=vec(o,dr),h=half(o,dr);return Math.hypot(o.x-v[0]*h-l.b[0],o.y-v[1]*h-l.b[1])};let best=1e9;[0,1].forEach(dr=>{const s=e(dr);if(s<best-1e-6){best=s;dir=dr}})}cur.passages.push({id:uid(),oid:o.id,dir});persist();draw();panel();return}
+sel=o.id;mode=mode==='chk'?'add':mode;snapshot();const p=pt(e);drag={o,dx:o.x-p.x,dy:o.y-p.y,moved:false};e.target.setPointerCapture&&document.getElementById('sv').setPointerCapture(e.pointerId);draw();panel();tabs()}
+function pm(e){if(!drag)return;const p=pt(e);drag.o.x=Math.min(cur.w,Math.max(0,sn(p.x+drag.dx)));drag.o.y=Math.min(cur.h,Math.max(0,sn(p.y+drag.dy)));drag.moved=true;draw()}
+function pu(){if(!drag)return;if(!drag.moved)undo.pop();drag=null;persist();panel()}
+
+function add(t){snapshot();const cv=document.getElementById('cv');const o={id:uid(),t,x:sn(cur.w/2),y:sn(Math.min(cur.h-2,Math.max(2,(cv.scrollTop/(cv.scrollHeight||1))*cur.h+cur.h/6))),r:0};cur.obs.push(o);sel=o.id;persist();draw();panel()}
+function upd(k,v){const o=cur.obs.find(x=>x.id===sel);if(!o)return;snapshot();o[k]=+v||0;persist();draw()}
+function rot(d){const o=cur.obs.find(x=>x.id===sel);if(!o)return;snapshot();o.r=((o.r+d)%360+360)%360;persist();draw();panel()}
+function dupO(){const o=cur.obs.find(x=>x.id===sel);if(!o)return;snapshot();const n={...o,id:uid(),x:o.x+1.5,y:o.y+1.5};cur.obs.push(n);sel=n.id;persist();draw();panel()}
+function delO(){if(!sel)return;snapshot();cur.obs=cur.obs.filter(o=>o.id!==sel);cur.passages=cur.passages.filter(p=>p.oid!==sel);sel=null;persist();draw();panel()}
+function flipP(i){snapshot();const p=cur.passages[i];p.dir=p.dir&1?0:1;persist();draw();panel()}
+function modeP(i){snapshot();const p=cur.passages[i];p.mode=((p.mode||0)+1)%5;if(p.mode>=3&&i>0){const R=route(cur),pv=R.L[i-1],o=cur.obs.find(x=>x.id===p.oid),h=half(o),e=dr=>{const v=vec(o,dr);return Math.hypot(o.x+v[0]*h-pv.b[0],o.y+v[1]*h-pv.b[1])};p.dir=e(1)<e(0)?1:0}persist();draw();panel()}
+const MN=['Geradeaus','Normal links','Normal rechts','Außen links','Außen rechts'];
+function chip(p,i){const o=cur.obs.find(x=>x.id===p.oid);if(!o)return'';return `<span><button class="chip" onclick="flipP(${i})">${i+1} ${esc(T[o.t][0])} ⇄</button>${T[o.t][4]==='j'?`<button class="chip" style="background:var(--sf);border:1.5px solid var(--ac)" onclick="modeP(${i})">${MN[p.mode||0]}</button>`:''}</span>`}
+function popP(){if(!cur.passages.length)return;snapshot();cur.passages.pop();persist();draw();panel()}
+function resetP(){snapshot();cur.passages=[];persist();draw();panel()}
+
+function check(){const m=[],P=cur.passages.map(p=>cur.obs.find(o=>o.id===p.oid)).filter(Boolean);
+cur.obs.forEach(o=>{const d=T[o.t],h=Math.max(d[1],d[2])/2;if(o.x<0||o.y<0||o.x>cur.w||o.y>cur.h)m.push(['e',d[0]+': liegt außerhalb der Fläche.','Schiebe das Gerät zurück auf die Fläche.'])});
+for(let i=0;i<cur.obs.length;i++)for(let j=i+1;j<cur.obs.length;j++){const a=cur.obs[i],b=cur.obs[j];if(Math.hypot(a.x-b.x,a.y-b.y)<1.5)m.push(['w',T[a.t][0]+' und '+T[b.t][0]+' liegen sehr nah beieinander (unter 1,5 m).','Vergrößere den Abstand.'])}
+if(!cur.obs.some(o=>o.t==='start'))m.push(['h','Es gibt noch keine Startposition.','Füge „Start“ hinzu.']);
+if(!cur.obs.some(o=>o.t==='finish'))m.push(['h','Es gibt noch keine Zielposition.','Füge „Ziel“ hinzu.']);
+if(!cur.passages.length)m.push(['h','Der Parcours ist noch nicht nummeriert.','Öffne „Nummerieren“ und tippe die Geräte der Reihe nach an.']);
+const un=cur.obs.filter(o=>!['start','finish'].includes(o.t)&&!cur.passages.some(p=>p.oid===o.id));if(un.length&&cur.passages.length)m.push(['h',un.length+' Gerät(e) ohne Nummer.','Nummeriere sie oder lösche sie.']);
+return m}
+
+function panel(){const pn=document.getElementById('pn');if(!pn)return;let h='';const o=cur.obs.find(x=>x.id===sel);
+if(mode==='num'){h=`<b>Nummerieren</b><p class="mu" style="margin:4px 0">Tippe die Geräte der Reihe nach an. Die kleinen Pfeile auf der grünen Linie zeigen die Laufrichtung. ⇄ dreht die Sprungrichtung um. Bei Sprüngen wählst du mit dem grün umrandeten Feld die Variante: Normal links/rechts oder Außen links/rechts.</p><div>${cur.passages.map((p,i)=>`${chip(p,i)}`).join('')||'<span class="mu">Noch keine Nummern.</span>'}</div>
+<p style="margin:6px 0"><b>Länge:</b> ca. ${r1(length(cur))} m <span class="mu">(entlang der Lauflinie, Planungshilfe)</span></p><div class="row"><button onclick="popP()">Letzte entfernen</button><button onclick="resetP()">Zurücksetzen</button></div>`}
+else if(mode==='chk'){const m=check();h=`<b>Prüfung</b><div class="msg h">Die automatische Regelprüfung nach VDH/FCI ist noch nicht aktiv. Die Regeln müssen zuerst aus dem Original geprüft werden. Dieser Parcours gilt daher <b>nicht</b> als regelkonform.</div>`+(m.length?m.map(x=>`<div class="msg ${x[0]}"><b>${{e:'Fehler',w:'Warnung',h:'Hinweis'}[x[0]]}:</b> ${esc(x[1])}<br><span class="mu">So geht es: ${esc(x[2])}</span></div>`).join(''):'<div class="msg h">Keine geometrischen Probleme gefunden.</div>')}
+else{if(o)h=`<b>${T[o.t][0]}</b> <span class="mu">${T[o.t][1]} × ${T[o.t][2]} m</span><div class="pr"><div><label>X (m)</label><input type="number" step="0.5" value="${o.x}" onchange="upd('x',this.value)"></div><div><label>Y (m)</label><input type="number" step="0.5" value="${o.y}" onchange="upd('y',this.value)"></div><div><label>Drehung °</label><input type="number" step="15" value="${o.r}" onchange="upd('r',this.value)"></div></div>
+<div class="row"><button onclick="rot(-15)">⟲ 15°</button><button onclick="rot(15)">⟳ 15°</button><button onclick="rot(90)">90°</button><button onclick="dupO()">Duplizieren</button><button onclick="delO()">Löschen</button></div><hr style="border:0;border-top:1px solid var(--ln);margin:12px 0">`;
+h+=`<b>Gerät hinzufügen</b><div class="pal" style="margin-top:8px">${Object.keys(T).map(k=>`<button onclick="add('${k}')"><svg width="44" height="30" viewBox="-1.2 -1.2 2.4 2.4" style="overflow:visible"><g transform="scale(${Math.min(1,1.9/Math.max(T[k][1],T[k][2]))})">${shape({t:k})}</g></svg>${T[k][0]}</button>`).join('')}</div><p class="mu" style="font-size:13px">Maße sind Richtwerte und noch nicht gegen die Prüfungsordnung geprüft.</p>`}
+pn.innerHTML=h}
+function printPdf(){const L=cur.w>cur.h,W=L?277:190,H=L?170:250,r=(cur.w+2)/(cur.h+2),sv=document.getElementById('sv');let w=W,h=W/r;if(h>H){h=H;w=H*r}
+document.getElementById('pg').textContent=`@page{size:A4 ${L?'landscape':'portrait'};margin:10mm}`;sv.style.width=w+'mm';sv.style.height=h+'mm';window.print();setTimeout(()=>{if(cur&&document.getElementById('sv'))draw()},800)}
+window.addEventListener('afterprint',()=>{if(cur&&document.getElementById('sv'))draw()});
+function backup(){app.innerHTML=`<main><button onclick="home()">‹ Zurück</button><h1>Sicherung</h1><p class="mu">Kopiere diesen Text und speichere ihn z. B. in einer Notiz. Zum Laden fügst du ihn hier wieder ein.</p><textarea id="bk" style="width:100%;height:220px;box-sizing:border-box;font-size:13px">${esc(JSON.stringify(courses))}</textarea><div class="row"><button class="pri" onclick="bkCopy()">Kopieren</button><button onclick="bkLoad()">Aus Text laden</button></div><div class="row"><button onclick="bkFile()">Als Datei speichern</button><label style="display:inline-flex;align-items:center;padding:10px 14px;border:1.5px solid var(--ln);border-radius:12px;min-height:44px;box-sizing:border-box;cursor:pointer;background:var(--sf)">Datei laden<input type="file" accept=".json,application/json" onchange="bkPick(event)" style="display:none"></label></div><p id="bm" class="mu"></p></main>`}
+function bkFile(){const b=new Blob([JSON.stringify(courses)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='agility-parcours.json';document.body.appendChild(a);a.click();a.remove();document.getElementById('bm').textContent='Datei "agility-parcours.json" wurde heruntergeladen.'}
+function bkPick(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{document.getElementById('bk').value=r.result;bkLoad()};r.readAsText(f)}
+function bkCopy(){const t=document.getElementById('bk');t.select();try{navigator.clipboard.writeText(t.value)}catch(e){}document.getElementById('bm').textContent='Kopiert. Falls nicht, markiere den Text selbst und kopiere ihn.'}
+function bkLoad(){try{const a=JSON.parse(document.getElementById('bk').value);if(!Array.isArray(a))throw 0;let n=0;a.forEach(c=>{if(c&&c.id&&Array.isArray(c.obs)&&!courses.some(x=>x.id===c.id)){courses.push(c);n++}});try{localStorage.setItem('acd-courses',JSON.stringify(courses))}catch(e){}document.getElementById('bm').textContent=n+' Parcours geladen. Du findest sie unter „Meine Parcours“.'}catch(e){document.getElementById('bm').textContent='Der Text ist ungültig.'}}
+window.addEventListener('resize',()=>{if(cur&&document.getElementById('sv'))draw()});
+load();home();
+</script></body></html>
